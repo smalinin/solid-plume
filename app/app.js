@@ -334,6 +334,19 @@ Plume = (function () {
             });
         });
     };
+/****
+//??
+    var http = new XMLHttpRequest();
+    http.open('get', '/plume/config.json');
+    http.onreadystatechange = function() {
+        if (this.readyState == this.DONE) {
+            init(JSON.parse(this.response));
+        }
+    };
+    http.send();
+
+***/
+
 
 
     // get profile data for a given user
@@ -1535,6 +1548,7 @@ Plume = (function () {
     // ----- INIT -----
     // start app by loading the config file
     applyConfig();
+/**
     var http = new XMLHttpRequest();
     http.open('get', '/plume/config.json');
     http.onreadystatechange = function() {
@@ -1543,7 +1557,7 @@ Plume = (function () {
         }
     };
     http.send();
-
+**/
 
 
     // return public functions
