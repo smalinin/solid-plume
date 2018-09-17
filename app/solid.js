@@ -31,111 +31,10 @@ https://github.com/solid/
 
 */
 
-// WebID authentication and signup
-var Solid = Solid || {};
-Solid.auth = (function(window) {
-    'use strict';
-
-   // default (preferred) authentication endpoint
-    var authEndpoint = 'https://databox.me/';
-    var signupEndpoint = 'https://solid.github.io/solid-idps/';
-
-    // attempt to find the current user's WebID from the User header if authenticated
-    // resolve(webid) - string
-    var login = function(url) {
-        url = url || window.location.origin+window.location.pathname;
-        var promise = new Promise(function(resolve, reject) {
-            var http = new XMLHttpRequest();
-            http.open('HEAD', url);
-            http.withCredentials = true;
-            http.onreadystatechange = function() {
-                if (this.readyState == this.DONE) {
-                    if (this.status === 200) {
-                        var user = this.getResponseHeader('User');
-                        if (user && user.length > 0 && user.slice(0, 4) == 'http') {
-                            return resolve(user);
-                        }
-                    }
-                    // authenticate to a known endpoint
-                    var http = new XMLHttpRequest();
-                    http.open('HEAD', authEndpoint);
-                    http.withCredentials = true;
-                    http.onreadystatechange = function() {
-                        if (this.readyState == this.DONE) {
-                            if (this.status === 200) {
-                                var user = this.getResponseHeader('User');
-                                if (user && user.length > 0 && user.slice(0, 4) == 'http') {
-                                    return resolve(user);
-                                }
-                            }
-                            return reject({status: this.status, xhr: this});
-                        }
-                    };
-                    http.send();
-                }
-            };
-            http.send();
-        });
-
-        return promise;
-    };
-
-    // Open signup window
-    var signup = function(url) {
-        url = url || signupEndpoint;
-        var leftPosition, topPosition;
-        var width = 1024;
-        var height = 600;
-        // set borders
-        leftPosition = (window.screen.width / 2) - ((width / 2) + 10);
-        // set title and status bars
-        topPosition = (window.screen.height / 2) - ((height / 2) + 50);
-        window.open(url+"?origin="+encodeURIComponent(window.location.origin), "Solid signup", "resizable,scrollbars,status,width="+width+",height="+height+",left="+ leftPosition + ",top=" + topPosition);
-
-        var promise = new Promise(function(resolve, reject) {
-            console.log("Starting listener");
-            listen().then(function(webid) {
-                return resolve(webid);
-            }).catch(function(err){
-                return reject(err);
-            });
-        });
-
-        return promise;
-    };
-
-    // Listen to login messages from child window/iframe
-    var listen = function() {
-        var promise = new Promise(function(resolve, reject){
-            console.log("In listen()");
-            var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
-            var eventListener = window[eventMethod];
-            var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
-            eventListener(messageEvent,function(e) {
-                var u = e.data;
-                if (u.slice(0,5) == 'User:') {
-                    var user = u.slice(5, u.length);
-                    if (user && user.length > 0 && user.slice(0,4) == 'http') {
-                        return resolve(user);
-                    } else {
-                        return reject(user);
-                    }
-                }
-            },true);
-        });
-
-        return promise;
-    };
-
-    // return public methods
-    return {
-        login: login,
-        signup: signup,
-        listen: listen,
-    };
-}(this));
 // Identity / WebID
 var Solid = Solid || {};
+Solid.fetch = fetch;
+
 Solid.identity = (function(window) {
     'use strict';
 
@@ -342,26 +241,28 @@ Solid.utils = (function(window) {
 }(this));
 // LDP operations
 var Solid = Solid || {};
+// Init some defaults;
+Solid.config = {};
+Solid.config.proxyUrl = "https://databox.me/,proxy?uri={uri}";
+Solid.config.timeout = 5000;
+
 Solid.web = (function(window) {
     'use strict';
 
-    // Init some defaults;
-    var PROXY = "https://databox.me/,proxy?uri={uri}";
-    var TIMEOUT = 5000;
-
-    $rdf.Fetcher.crossSiteProxyTemplate = PROXY;
+    $rdf.Fetcher.crossSiteProxyTemplate = Solid.config.proxyUrl;
     // common vocabs
     var LDP = $rdf.Namespace("http://www.w3.org/ns/ldp#");
 
     // return metadata for a given request
     var parseResponseMeta = function(resp) {
-        var h = Solid.utils.parseLinkHeader(resp.getResponseHeader('Link'));
+        var headers = resp.headers;
+        var h = Solid.utils.parseLinkHeader(headers.get('Link'));
         var meta = {};
-        meta.url = (resp.getResponseHeader('Location'))?resp.getResponseHeader('Location'):resp.responseURL;
+        meta.url = (headers.has('Location'))?headers.get('Location'):resp.url;
         meta.acl = h['acl'];
         meta.meta = (h['meta'])?h['meta']:h['describedBy'];
-        meta.user = (resp.getResponseHeader('User'))?resp.getResponseHeader('User'):'';
-        meta.websocket = (resp.getResponseHeader('Updates-Via'))?resp.getResponseHeader('Updates-Via'):'';
+        meta.user = (headers.has('User'))?headers.get('User'):'';
+        meta.websocket = (headers.has('Updates-Via'))?headers.get('Updates-Via'):'';
         meta.exists = false;
         meta.exists = (resp.status === 200)?true:false;
         meta.xhr = resp;
@@ -371,18 +272,8 @@ Solid.web = (function(window) {
     // check if a resource exists and return useful Solid info (acl, meta, type, etc)
     // resolve(metaObj)
     var head = function(url) {
-        var promise = new Promise(function(resolve) {
-            var http = new XMLHttpRequest();
-            http.open('HEAD', url);
-            http.onreadystatechange = function() {
-                if (this.readyState == this.DONE) {
-                    resolve(parseResponseMeta(this));
-                }
-            };
-            http.send();
-        });
-
-        return promise;
+        return Solid.fetch(url, {method: 'HEAD' })
+          .then((resp) => parseResponseMeta(resp))
     };
 
     // fetch an RDF resource
@@ -390,7 +281,7 @@ Solid.web = (function(window) {
     var get = function(url) {
         var promise = new Promise(function(resolve, reject) {
             var g = new $rdf.graph();
-            var f = new $rdf.fetcher(g, TIMEOUT);
+            var f = new $rdf.fetcher(g, Solid.config.timeout);
 
             var docURI = (url.indexOf('#') >= 0)?url.slice(0, url.indexOf('#')):url;
             f.nowOrWhenFetched(docURI,undefined,function(ok, body, xhr) {
@@ -409,80 +300,73 @@ Solid.web = (function(window) {
     // resolve(metaObj) | reject
     var post = function(url, slug, data, isContainer) {
         var resType = (isContainer)?LDP('BasicContainer').uri:LDP('Resource').uri;
-        var promise = new Promise(function(resolve, reject) {
-            var http = new XMLHttpRequest();
-            http.open('POST', url);
-            http.setRequestHeader('Content-Type', 'text/turtle');
-            http.setRequestHeader('Link', '<'+resType+'>; rel="type"');
-            if (slug && slug.length > 0) {
-                http.setRequestHeader('Slug', slug);
-            }
-            http.withCredentials = true;
-            http.onreadystatechange = function() {
-                if (this.readyState == this.DONE) {
-                    if (this.status === 200 || this.status === 201) {
-                        resolve(parseResponseMeta(this));
-                    } else {
-                        reject({status: this.status, xhr: this});
-                    }
-                }
-            };
-            if (data && data.length > 0) {
-                http.send(data);
-            } else {
-                http.send();
-            }
-        });
+        var init = { 
+                    method: 'POST',
+                    headers : {
+                       'Content-Type': 'text/turtle',
+                       'Link': '<'+resType+'>; rel="type"'
+                    },
+                    credentials: 'include', 
+                   }
+        if (slug && slug.length > 0) {
+          init.headers['Slug'] = slug;
+        }
+        if (data && data.length > 0) {
+          init['body'] = data;
+        }
 
+        var promise = Solid.fetch(url, init)
+               .then((resp) => {
+                  if (resp.status === 200 || resp.status === 201) {  
+                    return Promise.resolve(parseResponseMeta(resp))  
+                  } else {  
+                    return Promise.reject({status: resp.status, msg: resp.statusText})
+                  }  
+               })
         return promise;
     };
 
+    
     // update/create resource using HTTP PUT
     // resolve(metaObj) | reject
     var put = function(url, data) {
-        var promise = new Promise(function(resolve, reject) {
-            var http = new XMLHttpRequest();
-            http.open('PUT', url);
-            http.setRequestHeader('Content-Type', 'text/turtle');
-            http.withCredentials = true;
-            http.onreadystatechange = function() {
-                if (this.readyState == this.DONE) {
-                    if (this.status === 200 || this.status === 201) {
-                        return resolve(parseResponseMeta(this));
-                    } else {
-                        reject({status: this.status, xhr: this});
-                    }
-                }
-            };
-            if (data) {
-                http.send(data);
-            } else {
-                http.send();
-            }
-        });
+        var init = { 
+                    method: 'PUT',
+                    headers : {
+                       'Content-Type': 'text/turtle',
+                    },
+                    credentials: 'include', 
+                   }
+        if (data && data.length > 0) {
+          init['body'] = data;
+        }
 
+        var promise = Solid.fetch(url, init)
+               .then((resp) => {
+                  if (resp.status === 200 || resp.status === 201) {  
+                    return Promise.resolve(parseResponseMeta(resp))  
+                  } else {  
+                    return Promise.reject({status: resp.status, msg: resp.statusText})
+                  }  
+               })
         return promise;
     };
 
     // delete a resource
     // resolve(true) | reject
     var del = function(url) {
-        var promise = new Promise(function(resolve, reject) {
-            var http = new XMLHttpRequest();
-            http.open('DELETE', url);
-            http.withCredentials = true;
-            http.onreadystatechange = function() {
-                if (this.readyState == this.DONE) {
-                    if (this.status === 200) {
-                        return resolve(true);
-                    } else {
-                        reject({status: this.status, xhr: this});
-                    }
-                }
-            };
-            http.send();
-        });
-
+        var init = { 
+                    method: 'DELETE',
+                    credentials: 'include', 
+                   }
+        var promise = Solid.fetch(url, init)
+               .then((resp) => {
+                  if (resp.status === 200) {  
+                    return Promise.resolve(true)  
+                  } else {  
+                    return Promise.reject({status: resp.status, msg: resp.statusText})
+                  }  
+               })
         return promise;
     }
 
