@@ -318,7 +318,7 @@ Plume = (function () {
             try
             {
               var http = new XMLHttpRequest();
-              http.open('get', '/plume/config.json');
+              http.open('get', user.pim+'plume/config.json');
               http.onreadystatechange = function() {
                 if (this.readyState == this.DONE) {
                   init(JSON.parse(this.response));
