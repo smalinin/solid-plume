@@ -12,7 +12,7 @@ Plume = (function () {
          "owners": [],
          "title": "Plume",
          "tagline": "Light as a feather",
-         "picture": "solid-plume/img/logo.svg",
+         "picture": "img/logo.svg",
          "fadeText": true,
          "showSources": true,
          "cacheUnit": "days",
