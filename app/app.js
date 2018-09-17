@@ -16,7 +16,7 @@ Plume = (function () {
          "fadeText": true,
          "showSources": true,
          "cacheUnit": "days",
-         "defaultPath": "posts",
+         "defaultPath": "",
          "postsURL": ""
     };
     var appURL = window.location.origin+window.location.pathname;
