@@ -184,9 +184,6 @@ Plume = (function () {
 
     // Set default config values
     var applyConfig = function(configData) {
-        if (!configData)
-          return;
-
         // loaded config from file
         config.defaultPath = 'posts';
         if (configData) {
@@ -1584,6 +1581,7 @@ Plume = (function () {
     // ----- INIT -----
     // start app by loading the config file
     applyConfig();
+    init(config);
 /**
     var http = new XMLHttpRequest();
     http.open('get', '/plume/config.json');
