@@ -331,7 +331,7 @@ Plume = (function () {
               http.open('get', user.pim+'plume/config.json');
               http.onreadystatechange = function() {
                 if (this.readyState == this.DONE) {
-                  init(JSON.parse(this.response));
+                  applyConfig(JSON.parse(this.response));
                 }
               };
               http.send();
@@ -360,18 +360,6 @@ Plume = (function () {
             });
         });
     };
-/****
-//??
-    var http = new XMLHttpRequest();
-    http.open('get', '/plume/config.json');
-    http.onreadystatechange = function() {
-        if (this.readyState == this.DONE) {
-            init(JSON.parse(this.response));
-        }
-    };
-    http.send();
-
-***/
 
 
 
