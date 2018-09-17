@@ -5,13 +5,15 @@ var Plume = Plume || {};
 Plume = (function () {
     'use strict';
 
-    const popupUri = window.origin + '/common/popup.html'
+//    const popupUri = window.origin + '/common/popup.html'
+    const popupUri = 'https://solid.openlinksw.com:8444/common/popup.html'
 
     var config = Plume.config || {};
     var appURL = window.location.origin+window.location.pathname;
 
     // RDF
-    var PROXY = window.origin + '/proxy?uri={uri}';
+//    var PROXY = window.origin + '/proxy?uri={uri}';
+    var PROXY = 'https://solid.openlinksw.com:8444/proxy?uri={uri}';
     var TIMEOUT = 5000;
 
     Solid.config.proxyUrl = PROXY;
