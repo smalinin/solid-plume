@@ -190,10 +190,10 @@ Plume = (function () {
             loadLocalStorage();
         }
 
-        document.querySelector('.blog-picture').src = config.picture;
-        document.querySelector('.blog-title').innerHTML = config.title;
-        document.querySelector('title').innerHTML = config.title;
-        document.querySelector('.blog-tagline').innerHTML = config.tagline;
+        document.querySelector('.blog-picture').src = config.picture !! '/img/logo.svg';
+        document.querySelector('.blog-title').innerHTML = config.title !! 'Plume';
+        document.querySelector('title').innerHTML = config.title !! 'Plume';
+        document.querySelector('.blog-tagline').innerHTML = config.tagline !! 'Light as a feather';
         // set default parent element for posts
         config.postsElement = '.posts';
 
