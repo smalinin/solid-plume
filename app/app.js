@@ -313,6 +313,22 @@ Plume = (function () {
             user.name = profile.name;
             user.picture = profile.picture;
             user.date = Date.now();
+            user.pim = profile.pim;
+
+            try
+            {
+              var http = new XMLHttpRequest();
+              http.open('get', '/plume/config.json');
+              http.onreadystatechange = function() {
+                if (this.readyState == this.DONE) {
+                  init(JSON.parse(this.response));
+                }
+              };
+              http.send();
+
+            } catch(e) { console.log(e); }
+
+
             // add self to authors list
             authors[webid] = user;
             saveLocalAuthors();
@@ -403,6 +419,13 @@ Plume = (function () {
         }
         if (pic && pic.uri.length > 0) {
             profile.picture = pic.uri;
+        }
+
+        var pim = g.any(webidRes, PIM('storage'));
+        if (pim && pim.uri.length > 0) {
+          profile.pim = pim.uri;
+        } else {
+          profile.pim = (new URL(webid)).origin;
         }
 
         return profile;
