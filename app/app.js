@@ -8,7 +8,17 @@ Plume = (function () {
 //    const popupUri = window.origin + '/common/popup.html'
     const popupUri = 'https://solid.openlinksw.com:8444/common/popup.html'
 
-    var config = Plume.config || {};
+    var config = Plume.config || {
+         "owners": [],
+         "title": "Plume",
+         "tagline": "Light as a feather",
+         "picture": "solid-plume/img/logo.svg",
+         "fadeText": true,
+         "showSources": true,
+         "cacheUnit": "days",
+         "defaultPath": "posts",
+         "postsURL": "blog/posts/"
+    };
     var appURL = window.location.origin+window.location.pathname;
 
     // RDF
@@ -174,6 +184,9 @@ Plume = (function () {
 
     // Set default config values
     var applyConfig = function(configData) {
+        if (!configData)
+          return;
+
         // loaded config from file
         config.defaultPath = 'posts';
         if (configData) {
