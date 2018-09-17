@@ -730,7 +730,9 @@ Plume = (function () {
         g.add(GRAPH('#author'), RDF('type'), SIOC('UserAccount'));
         g.add(GRAPH('#author'), SIOC('account_of'), $rdf.sym(post.author));
         g.add(GRAPH('#author'), FOAF('name'), $rdf.lit(authors[post.author].name));
-        g.add(GRAPH('#author'), SIOC('avatar'), $rdf.sym(authors[post.author].picture));
+
+        if (authors[post.author].picture)
+          g.add(GRAPH('#author'), SIOC('avatar'), $rdf.sym(authors[post.author].picture));
 
         var triples = new $rdf.Serializer(g).toN3(g);
 
