@@ -5,7 +5,7 @@ var Plume = Plume || {};
 Plume = (function () {
     'use strict';
 
-    const popupUri = window.origin + '/popup.html'
+    const popupUri = window.origin + '/solid-plume/popup.html'
 
     var config = Plume.config || {};
     var appURL = window.location.origin+window.location.pathname;
