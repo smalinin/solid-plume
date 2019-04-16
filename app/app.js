@@ -1533,7 +1533,7 @@ Plume = (function () {
     // ----- INIT -----
     // start app by loading the config file
     applyConfig();
-    fetch('/plume/config.json')
+    fetch('config.json')
        .then(resp => {
          if (resp.ok) {
            resp.text().then(text => {
