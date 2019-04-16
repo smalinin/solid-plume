@@ -1,0 +1,11 @@
+{
+    "owners": ["https://smalinin.solid.openlinksw.com:8444"],
+    "title": "Plume",
+    "tagline": "Light as a feather",
+    "picture": "img/logo.svg",
+    "fadeText": true,
+    "showSources": true,
+    "cacheUnit": "days",
+    "defaultPath": "posts",
+    "postsURL": "https://smalinin.solid.openlinksw.com:8444/public/blog/posts/"
+}
